@@ -1,8 +1,6 @@
 const assert = require('assert');
 const _ = require('lodash');
 
-var filesToProcess = [];
-
 function printUsage() {
 	console.log("Usage:\n");
 }
@@ -13,15 +11,26 @@ function validateCmdArgs() {
 		return false;
 
 	var numberOfFiles = process.argv.length - fileArg - 1;
-	console.log(numberOfFiles);
 
 	if(numberOfFiles < 1)
 		return false;
 
-	return true;
+	return process.argv.slice(fileArg + 1);
 }
 
-if(!validateCmdArgs()) {
+function processFile(fileName) {
+	console.log(`Processing ${fileName}...`);
+}
+
+// Main program body
+var filesToProcess = validateCmdArgs();
+if(filesToProcess === false) {
 	printUsage();
 	process.abort();
 }
+
+console.log(`Processing ${filesToProcess.length} file(s)...`);
+
+_.each(filesToProcess, function(value, key) {
+	processFile(value);
+});
