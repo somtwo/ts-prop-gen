@@ -1,5 +1,5 @@
-const assert = require('assert');
 const _ = require('lodash');
+const fileProcessor = require('./fileProcessor.js');
 
 function printUsage() {
 	console.log("Usage:\n");
@@ -18,10 +18,6 @@ function validateCmdArgs() {
 	return process.argv.slice(fileArg + 1);
 }
 
-function processFile(fileName) {
-	console.log(`Processing ${fileName}...`);
-}
-
 // Main program body
 var filesToProcess = validateCmdArgs();
 if(filesToProcess === false) {
@@ -32,5 +28,5 @@ if(filesToProcess === false) {
 console.log(`Processing ${filesToProcess.length} file(s)...`);
 
 _.each(filesToProcess, function(value, key) {
-	processFile(value);
+	fileProcessor.processFile(value);
 });
