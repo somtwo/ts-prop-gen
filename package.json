@@ -1,0 +1,14 @@
+{
+  "name": "prop-type-gen",
+  "version": "0.1.0",
+  "description": "Tool to automatically generate TypeScript type definitions for React components based on their propTypes declaration",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Stephen McGranahan",
+  "license": "ISC",
+  "dependencies": {
+    "lodash": "^4.15.0"
+  }
+}
