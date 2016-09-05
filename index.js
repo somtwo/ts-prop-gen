@@ -2,29 +2,61 @@ const _ = require('lodash');
 const fileProcessor = require('./fileProcessor.js');
 
 function printUsage() {
-	console.log("Usage:\n");
+	console.log("Usage:	proptypegen --module <name-of-module> --files <files-to-process>\n");
+	console.log("	<name-of-module>	name of module the components belong to");
+	console.log("	<files-to-process>	space-delimited list of filenames to process");
 }
 
-function validateCmdArgs() {
-	var fileArg = _.indexOf(process.argv, '--files');
-	if(fileArg == -1)
+function findNextSwitch(args, start) {
+	var i;
+
+	for(i = start; i < args.length; ++i) {
+		if(args[i].indexOf('--') == 0)
+			return i;
+	}
+
+	return i;
+}
+
+function getArgumentsForSwitch(args, switchName) {
+	var switchIndex = _.indexOf(args, switchName);
+	if(switchIndex == -1)
+		return undefined;
+
+	var nextSwitch = findNextSwitch(args, switchIndex + 1);
+	var numberOfArguments = nextSwitch - switchIndex - 1;
+
+	if(numberOfArguments < 1)
+		return undefined;
+
+	return args.slice(switchIndex + 1, nextSwitch);
+}
+
+function validateCmdArgs(args) {
+	var filesToProcess = getArgumentsForSwitch(args, '--files');
+
+	if(filesToProcess == undefined)
 		return false;
 
-	var numberOfFiles = process.argv.length - fileArg - 1;
+	var moduleName = getArgumentsForSwitch(args, '--module')[0];
 
-	if(numberOfFiles < 1)
+	if(module == undefined)
 		return false;
 
-	return process.argv.slice(fileArg + 1);
+	return {
+		'filesToProcess': filesToProcess,
+		'moduleName': moduleName
+	}
 }
 
 // Main program body
-var filesToProcess = validateCmdArgs();
-if(filesToProcess === false) {
+var args = validateCmdArgs(process.argv);
+
+if(args === false) {
 	printUsage();
 	process.abort();
 }
 
-console.log(`Processing ${filesToProcess.length} file(s)...`);
+console.log(`Processing ${args.filesToProcess.length} file(s)...`);
 
-fileProcessor.processFiles({moduleName: 'foo-module'}, filesToProcess);
+fileProcessor.processFiles({moduleName: args.moduleName}, args.filesToProcess);
