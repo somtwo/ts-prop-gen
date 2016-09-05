@@ -1,6 +1,6 @@
 const React = require('react');
 
-let MyClass = React.createClass({
+var MyClass = React.createClass({
 	propTypes: {
 		foo: React.PropTypes.bool,
 		bar: React.PropTypes.number

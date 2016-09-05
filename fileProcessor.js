@@ -31,7 +31,7 @@ function processFile(fileName) {
 	return output;
 }
 
-function processFiles(fileNames) {
+function processFiles(config, fileNames) {
 	var processedFiles = _.map(fileNames, function(value) {
 		return processFile(value);
 	});
@@ -41,13 +41,13 @@ function processFiles(fileNames) {
 
 	// TODO: Determine what the namespace should be
 	var output = {
-		'moduleName': 'foo-module',
+		'moduleName': config.moduleName,
 		'interfaces': _.flatten(interfaces),
 		'classes': _.flatten(classes)
 	};
 
 	generateFileText(output);
-	writeTypeFile("output.d.ts", output.text);
+	writeTypeFile(config.moduleName + ".d.ts", output.text);
 }
 
 module.exports = {

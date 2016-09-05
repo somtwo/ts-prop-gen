@@ -27,4 +27,4 @@ if(filesToProcess === false) {
 
 console.log(`Processing ${filesToProcess.length} file(s)...`);
 
-fileProcessor.processFiles(filesToProcess);
+fileProcessor.processFiles({moduleName: 'foo-module'}, filesToProcess);
