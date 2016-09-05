@@ -1,16 +1,44 @@
 const assert = require('assert');
 const _ = require('lodash');
 const fs = require('fs');
+const React = require('react');
 
 const generateFileText = require('./codeGen.js').generateFileText;
 
-// TODO: roll output file name if output file already exists
 function writeTypeFile(fileName, outputText) {
 	fs.writeFileSync(fileName, outputText);
 }
 
 function interfaceForClassName(className) {
 	return `I${className}Props`;
+}
+
+function getClassBody(content, index) {
+	// TODO: something legit
+	return "({ 'propTypes': {'foo':React.PropTypes.number} })";
+}
+
+function getTypeNameForReactPropType(type) {
+	if(type == React.PropTypes.number)
+		return 'number';
+	else if(type == React.PropTypes.boolean)
+		return 'boolean';
+	else
+		return 'any';
+}
+
+function getPropTypes(reactPropTypes) {
+	var result = [];
+
+	_.each(reactPropTypes, function(value, key) {
+		var prop = {
+			'name': key,
+			'type': getTypeNameForReactPropType(value)
+		};
+		result.push(prop);
+	});
+
+	return result;
 }
 
 // TODO: Reference the base react.d.ts file
@@ -29,12 +57,21 @@ function processFile(fileName) {
 	while((matches = classRegex.exec(content)) !== null)
 	{
 		var className = matches[1];
+
+		var classBody = getClassBody(content, matches.index);
+		var classObject = eval(classBody);
+
+		if(classObject.propTypes == undefined) {
+			console.log(`	Warning: Class ${className} does not contian propTypes and will be skipped`);
+			continue;
+		}
+
 		var interfaceName = interfaceForClassName(className);
 
 		output.interfaces.push({
 			'name': interfaceName,
 			'componentClassName': className,
-			'members': [{'name': 'todo', 'type':'boolean'}] // TODO: Actually extract members
+			'members': getPropTypes(classObject.propTypes)
 		});
 
 		output.classes.push({
@@ -42,23 +79,6 @@ function processFile(fileName) {
 			'propsInterface': interfaceName
 		});
 	}
-
-	// TODO: Somethign valid
-	/*var output = {
-		'interfaces': [
-			{
-				'name': 'IFooProps',
-				'componentClassName': 'Foo',
-				'members': [{'name': 'foo', 'type': 'string'}],
-			}
-		],
-		'classes': [
-			{
-				'name': 'Foo',
-				'propsInterface': 'IFooProps'
-			}
-		]
-	};*/
 
 	return output;
 }

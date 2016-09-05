@@ -9,6 +9,7 @@
   "author": "Stephen McGranahan",
   "license": "ISC",
   "dependencies": {
-    "lodash": "^4.15.0"
+    "lodash": "^4.15.0",
+    "react": "^15.3.1"
   }
 }
