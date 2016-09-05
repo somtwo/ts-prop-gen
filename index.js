@@ -27,6 +27,4 @@ if(filesToProcess === false) {
 
 console.log(`Processing ${filesToProcess.length} file(s)...`);
 
-_.each(filesToProcess, function(value, key) {
-	fileProcessor.processFile(value);
-});
+fileProcessor.processFiles(filesToProcess);
