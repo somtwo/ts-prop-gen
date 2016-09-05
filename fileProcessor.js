@@ -9,10 +9,42 @@ function writeTypeFile(fileName, outputText) {
 	fs.writeFileSync(fileName, outputText);
 }
 
+function interfaceForClassName(className) {
+	return `I${className}Props`;
+}
+
 // TODO: Reference the base react.d.ts file
 function processFile(fileName) {
-	// TODO: Somethign valid
+	var content = fs.readFileSync(fileName, {'encoding': 'utf8'});
+	
 	var output = {
+		'interfaces': [],
+		'classes': []
+	};
+
+	// Look for react classes
+	var classRegex = /(?:var|let|const)\s+([\w-]+)\s+=\s+React\.createClass\s*\(\s*{/g;
+
+	var matches;
+	while((matches = classRegex.exec(content)) !== null)
+	{
+		var className = matches[1];
+		var interfaceName = interfaceForClassName(className);
+
+		output.interfaces.push({
+			'name': interfaceName,
+			'componentClassName': className,
+			'members': [{'name': 'todo', 'type':'boolean'}] // TODO: Actually extract members
+		});
+
+		output.classes.push({
+			'name': className,
+			'propsInterface': interfaceName
+		});
+	}
+
+	// TODO: Somethign valid
+	/*var output = {
 		'interfaces': [
 			{
 				'name': 'IFooProps',
@@ -26,7 +58,7 @@ function processFile(fileName) {
 				'propsInterface': 'IFooProps'
 			}
 		]
-	};
+	};*/
 
 	return output;
 }
