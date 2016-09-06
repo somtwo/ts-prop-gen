@@ -12,8 +12,7 @@ var MyClass = React.createClass({
 
 var OtherClass = React.createClass({
 	propTypes: {
-		foo: React.PropTypes.bool,
-		bar: React.PropTypes.number
+		foo: React.PropTypes.bool
 	},
 	render: function() {
 		return (<div>Hello world!</div>);

@@ -11,32 +11,49 @@ function writeTypeFile(fileName, outputText) {
 
 function interfaceForClassName(className) {	return `I${className}Props`; }
 
-function getClassBody(content, index) {
-	var paranLevel = 0;
+function findMatchingBrackets(text, startIndex, openchar, closechar) {
+	var openLevel = 0;
 	var start, end, i;
 
-	for(i = index; i < content.length; ++i) {
-		if(content.charAt(i) == '(') {
-			if(paranLevel == 0) start = i;
+	for(i = startIndex; i < text.length; ++i) {
+		var char = text.charAt(i);
 
-			paranLevel ++;
+		if(char == openchar) {
+			if(openLevel == 0) start = i;
+
+			openLevel++;
 			continue;
 		}
 
-		if(content.charAt(i) == ')') {
-			assert(paranLevel > 0, "paranLevel became less than 0");
+		if(char == closechar) {
+			assert(openLevel > 0, "openLevel became less than 0 while extracting prop types.");
+			openLevel--;
 
-			paranLevel --;
-
-			if(paranLevel == 0) {
+			if(openLevel == 0) {
 				end = i + 1;
 				break;
 			}
 		}
 	}
 
-	assert(i < content.length, "Failed to find the end of the class declaration");
-	var slice = content.slice(start, end);
+	if(i == text.length)	{
+		return { 'found': false };
+	}
+
+	return {
+		'found': true,
+		'start': start,
+		'end': end
+	};
+}
+
+
+function getClassBody(content, index) {
+	var pair = findMatchingBrackets(content, index, '(', ')');
+
+	assert(pair.found, "Failed to find the end of the class declaration");
+
+	var slice = content.slice(pair.start, pair.end);
 	return slice;
 }
 
@@ -48,35 +65,14 @@ function extractPropsFromBody(text) {
 		return "({})";
 	}
 
-	var start, end, i, bracketLevel = 0;
+	var range = findMatchingBrackets(text, propsIndex, '{', '}')
 
-	for(i = propsIndex; i < text.length; ++i) {
-		var char = text.charAt(i);
-
-		if(char == '{') {
-			if(bracketLevel == 0) start = i;
-
-			bracketLevel++;
-			continue;
-		}
-
-		if(char == '}') {
-			assert(bracketLevel > 0, "bracketLevel became less than 0 while extracting prop types.");
-			bracketLevel--;
-
-			if(bracketLevel == 0) {
-				end = i + 1;
-				break;
-			}
-		}
-	}
-
-	if(i == text.length) {
+	if(!range.found) {
 		console.log("	Warning: Failed to extract propTypes from class definition.");
 		return {};
 	}
 
-	var slice = `(${text.slice(start, end)})`;
+	var slice = `(${text.slice(range.start, range.end)})`;
 	return slice;
 }
 
@@ -149,7 +145,6 @@ function processFiles(config, fileNames) {
 	var interfaces = _.map(processedFiles, function(value) { return value.interfaces; });
 	var classes = _.map(processedFiles, function(value) { return value.classes; });
 
-	// TODO: Determine what the namespace should be
 	var output = {
 		'moduleName': config.moduleName,
 		'interfaces': _.flatten(interfaces),
