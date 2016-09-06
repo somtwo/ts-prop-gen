@@ -5,10 +5,6 @@ const React = require('react');
 
 const generateFileText = require('./codeGen.js').generateFileText;
 
-function writeTypeFile(fileName, outputText) {
-	fs.writeFileSync(fileName, outputText);
-}
-
 function interfaceForClassName(className) {	return `I${className}Props`; }
 
 function findMatchingBrackets(text, startIndex, openchar, closechar) {
@@ -152,7 +148,7 @@ function processFiles(config, fileNames) {
 	};
 
 	generateFileText(output);
-	writeTypeFile(config.moduleName + ".d.ts", output.text);
+	fs.writeFileSync(config.moduleName + ".d.ts", output.text);
 }
 
 module.exports = {
