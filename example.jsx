@@ -18,3 +18,8 @@ var OtherClass = React.createClass({
 		return (<div>Hello world!</div>);
 	}
 });
+
+module.exports = {
+	'MyClass': MyClass,
+	'OtherClass': OtherClass
+}
