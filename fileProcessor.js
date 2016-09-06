@@ -69,7 +69,7 @@ function extractPropsFromBody(text) {
 
 	if(!range.found) {
 		console.log("	Warning: Failed to extract propTypes from class definition.");
-		return {};
+		return "({})";
 	}
 
 	var slice = `(${text.slice(range.start, range.end)})`;
