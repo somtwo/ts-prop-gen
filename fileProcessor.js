@@ -9,13 +9,75 @@ function writeTypeFile(fileName, outputText) {
 	fs.writeFileSync(fileName, outputText);
 }
 
-function interfaceForClassName(className) {
-	return `I${className}Props`;
-}
+function interfaceForClassName(className) {	return `I${className}Props`; }
 
 function getClassBody(content, index) {
-	// TODO: something legit
-	return "({ 'propTypes': {'foo':React.PropTypes.number} })";
+	var paranLevel = 0;
+	var start, end, i;
+
+	for(i = index; i < content.length; ++i) {
+		if(content.charAt(i) == '(') {
+			if(paranLevel == 0) start = i;
+
+			paranLevel ++;
+			continue;
+		}
+
+		if(content.charAt(i) == ')') {
+			assert(paranLevel > 0, "paranLevel became less than 0");
+
+			paranLevel --;
+
+			if(paranLevel == 0) {
+				end = i + 1;
+				break;
+			}
+		}
+	}
+
+	assert(i < content.length, "Failed to find the end of the class declaration");
+	var slice = content.slice(start, end);
+	return slice;
+}
+
+function extractPropsFromBody(text) {
+	var propsIndex = text.indexOf("propTypes");
+
+	if(propsIndex == -1) {
+		console.log("	Warning: no propTypes property defined in component definition.")
+		return "({})";
+	}
+
+	var start, end, i, bracketLevel = 0;
+
+	for(i = propsIndex; i < text.length; ++i) {
+		var char = text.charAt(i);
+
+		if(char == '{') {
+			if(bracketLevel == 0) start = i;
+
+			bracketLevel++;
+			continue;
+		}
+
+		if(char == '}') {
+			assert(bracketLevel > 0, "bracketLevel became less than 0 while extracting prop types.");
+			bracketLevel--;
+
+			if(bracketLevel == 0) {
+				end = i + 1;
+				break;
+			}
+		}
+	}
+
+	if(i == text.length) {
+		console.log("	Warning: Failed to extract propTypes from class definition.");
+		return {};
+	}
+
+	var slice = `(${text.slice(start, end)})`;
+	return slice;
 }
 
 function getTypeNameForReactPropType(type) {
@@ -51,7 +113,7 @@ function processFile(fileName) {
 	};
 
 	// Look for react classes
-	var classRegex = /(?:var|let|const)\s+([\w-]+)\s+=\s+React\.createClass\s*\(\s*{/g;
+	var classRegex = /(?:var|let|const)\s+([\w-]+)\s+=\s+React\s*\.\s*createClass\s*\(\s*{/g;
 
 	var matches;
 	while((matches = classRegex.exec(content)) !== null)
@@ -59,19 +121,15 @@ function processFile(fileName) {
 		var className = matches[1];
 
 		var classBody = getClassBody(content, matches.index);
-		var classObject = eval(classBody);
-
-		if(classObject.propTypes == undefined) {
-			console.log(`	Warning: Class ${className} does not contian propTypes and will be skipped`);
-			continue;
-		}
+		var propsObject = extractPropsFromBody(classBody);
+		var propObject = eval(propsObject);
 
 		var interfaceName = interfaceForClassName(className);
 
 		output.interfaces.push({
 			'name': interfaceName,
 			'componentClassName': className,
-			'members': getPropTypes(classObject.propTypes)
+			'members': getPropTypes(propObject)
 		});
 
 		output.classes.push({
