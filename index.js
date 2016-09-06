@@ -2,7 +2,11 @@ const _ = require('lodash');
 const fileProcessor = require('./fileProcessor.js');
 
 function printUsage() {
-	console.log("Usage:	proptypegen --module <name-of-module> --files <files-to-process>\n");
+	console.log("tsPropGen can be used to generate TypeScript type definition files from ReactJS");
+	console.log("components written in Javascript. This tool looks in the propTypes member of");
+	console.log("the object passed to React.creatClass and will map those props to typescript");
+	console.log("types. The output includes both proptype interfaces and component class decls.\n");
+	console.log("Usage:	tspropgen --module <name-of-module> --files <files-to-process>\n");
 	console.log("	<name-of-module>	name of module the components belong to");
 	console.log("	<files-to-process>	space-delimited list of filenames to process");
 }
