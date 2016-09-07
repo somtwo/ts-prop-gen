@@ -12,5 +12,11 @@
     "lodash": "^4.15.0",
     "react": "^15.3.1"
   },
-  "bin": { "tspropgen": "./index.js" }
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/somtwo/ts-prop-gen",
+  },
+  "bin": {
+    "tspropgen": "./index.js"
+  }
 }
