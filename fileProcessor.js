@@ -72,6 +72,7 @@ function extractPropsFromBody(text) {
 	return slice;
 }
 
+// TODO: Support more than two prop type types.
 function getTypeNameForReactPropType(type) {
 	if(type == React.PropTypes.number)
 		return 'number';
@@ -105,6 +106,9 @@ function processFile(fileName) {
 	};
 
 	// Look for react classes
+	/* TODO: should probably take the name from the module exports. The name
+	   here would just be a way to look up which export is associated with which
+	   createClass call. */
 	var classRegex = /(?:var|let|const)\s+([\w-]+)\s+=\s+React\s*\.\s*createClass\s*\(\s*{/g;
 
 	var matches;
