@@ -1,66 +1,25 @@
-const _ = require('lodash');
+const yargs = require('yargs');
 const fileProcessor = require('./fileProcessor.js');
 
-function printUsage() {
-	console.log("tsPropGen can be used to generate TypeScript type definition files from ReactJS");
-	console.log("components written in Javascript. This tool looks in the propTypes member of");
-	console.log("the object passed to React.creatClass and will map those props to typescript");
-	console.log("types. The output includes both proptype interfaces and component class decls.\n");
-	console.log("Usage:	tspropgen --module <name-of-module> --files <files-to-process>\n");
-	console.log("	<name-of-module>	name of module the components belong to");
-	console.log("	<files-to-process>	space-delimited list of filenames to process");
-}
+console.log("tsPropGen can be used to generate TypeScript type definition files from ReactJS");
+console.log("components written in Javascript.");
 
-function findNextSwitch(args, start) {
-	var i;
+const argv = yargs
+	.usage("Usage: $0 <files-to-process...> [options]")
+	.alias('m', 'module')
+	.nargs('m', 1)
+	.describe('m', "The name of the output module")
+	.demand(1, ['m'])
+	.help('h')
+	.alias('h', 'help')
+	.argv;
 
-	for(i = start; i < args.length; ++i) {
-		if(args[i].indexOf('--') == 0)
-			return i;
-	}
 
-	return i;
-}
+const filesToProcess = argv._;
+const moduleName = argv.m;
 
-function getArgumentsForSwitch(args, switchName) {
-	var switchIndex = _.indexOf(args, switchName);
-	if(switchIndex == -1)
-		return undefined;
+console.log(`Processing ${filesToProcess.length} file(s):`);
 
-	var nextSwitch = findNextSwitch(args, switchIndex + 1);
-	var numberOfArguments = nextSwitch - switchIndex - 1;
+fileProcessor.processFiles({moduleName: moduleName}, filesToProcess);
 
-	if(numberOfArguments < 1)
-		return undefined;
-
-	return args.slice(switchIndex + 1, nextSwitch);
-}
-
-function validateCmdArgs(args) {
-	var filesToProcess = getArgumentsForSwitch(args, '--files');
-
-	if(filesToProcess == undefined)
-		return false;
-
-	var moduleName = getArgumentsForSwitch(args, '--module')[0];
-
-	if(module == undefined)
-		return false;
-
-	return {
-		'filesToProcess': filesToProcess,
-		'moduleName': moduleName
-	}
-}
-
-// Main program body
-var args = validateCmdArgs(process.argv);
-
-if(args === false) {
-	printUsage();
-	process.abort();
-}
-
-console.log(`Processing ${args.filesToProcess.length} file(s)...`);
-
-fileProcessor.processFiles({moduleName: args.moduleName}, args.filesToProcess);
+console.log('Done');
