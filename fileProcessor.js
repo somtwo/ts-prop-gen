@@ -5,6 +5,7 @@ const React = require('react');
 const acorn = require('acorn-jsx');
 
 const generateFileText = require('./codeGen.js').generateFileText;
+const matchTree = require('./treeMatcher').matchTree;
 
 function interfaceForClassName(className) {	return `I${className}Props`; }
 
@@ -17,6 +18,86 @@ function getTypeNameForReactPropType(type) {
 		return 'any';
 }
 
+const propTypeTree = {
+	'_matchMultiple': true,
+	'type': "VariableDeclarator",
+	'init': {
+		'type': "CallExpression",
+		'callee': {
+			'type': "MemberExpression",
+			'object': {
+				'type': "Identifier",
+				'name': "React"
+			},
+			'property': {
+				'type': "Identifier",
+				'name': "createClass"
+			}
+		},
+		'arguments': [{
+			'_orderedMatch': true,
+			'type': "ObjectExpression",
+			'properties': [{
+				'type': "Property",
+				'key': {
+					'type': "Identifier",
+					'name': "propTypes"
+				},
+				'value': {
+					'type': "ObjectExpression",
+					'properties': [{
+						'_matchMultiple': true,
+						'type': "Property",
+						'key': {
+							'type': "Identifier",
+							'_onMatch': (node, state) => { state.propName = node.name; }
+						},
+						'value': {
+							'type': "MemberExpression",
+							'object': {
+								'type': "MemberExpression",
+								'object': {
+									'type': "Identifier",
+									'name': "React"
+								},
+								'property': {
+									'type': 'Identifier',
+									'name': 'PropTypes',
+								}
+							},
+							'property': {
+								'type': 'Identifier',
+								'_onMatch': (node, state) => { state.valueType = node.name; }
+							}
+						},
+						'_onMatch': (node, state) => { 
+							state.props = state.props | [];
+							state.props.push({name: state.propName, type: state.propType });
+						}
+					}]
+				}
+			}]
+		}]
+	},
+	'_onMatch': (node, state) => {
+		state.classes = state.classes | [];
+		state.classes.push({
+			name: node.id.name,
+			props: state.props
+		});
+
+		state.props = [];
+	}
+}
+
+var bodyTree = {
+	'type': 'Program',
+	'body': [{
+		'type': 'VariableDeclaration',
+		'declarations': [propTypeTree]
+	}]
+}
+
 // TODO: Reference the base react.d.ts file
 function processFile(fileName) {
 	var content = fs.readFileSync(fileName, {'encoding': 'utf8'});
@@ -26,7 +107,8 @@ function processFile(fileName) {
 		//locations: true
 	});
 
-	console.log(ast);
+	var state = {};
+	matchTree(ast, bodyTree, state);
 
 	var output = {
 		'interfaces': [{
