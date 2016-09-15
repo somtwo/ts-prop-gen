@@ -25,24 +25,15 @@ const propTypeTree = {
 		'type': "CallExpression",
 		'callee': {
 			'type': "MemberExpression",
-			'object': {
-				'type': "Identifier",
-				'name': "React"
-			},
-			'property': {
-				'type': "Identifier",
-				'name': "createClass"
-			}
+			'object': { 'type': "Identifier", 'name': "React" },
+			'property': { 'type': "Identifier", 'name': "createClass" }
 		},
 		'arguments': [{
 			'_orderedMatch': true,
 			'type': "ObjectExpression",
 			'properties': [{
 				'type': "Property",
-				'key': {
-					'type': "Identifier",
-					'name': "propTypes"
-				},
+				'key': { 'type': "Identifier", 'name': "propTypes" },
 				'value': {
 					'type': "ObjectExpression",
 					'properties': [{
@@ -56,14 +47,8 @@ const propTypeTree = {
 							'type': "MemberExpression",
 							'object': {
 								'type': "MemberExpression",
-								'object': {
-									'type': "Identifier",
-									'name': "React"
-								},
-								'property': {
-									'type': 'Identifier',
-									'name': 'PropTypes',
-								}
+								'object': { 'type': "Identifier", 'name': "React" },
+								'property': { 'type': 'Identifier', 'name': 'PropTypes' }
 							},
 							'property': {
 								'type': 'Identifier',
@@ -93,9 +78,13 @@ const propTypeTree = {
 var bodyTree = {
 	'type': 'Program',
 	'body': [{
+		'_matchMultiple': true,
 		'type': 'VariableDeclaration',
 		'declarations': [propTypeTree]
-	}]
+	}],
+	'_onMatch': (node, state) => {
+		console.log("Match!");
+	}
 }
 
 // TODO: Reference the base react.d.ts file
