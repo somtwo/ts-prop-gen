@@ -10,7 +10,9 @@ var MyClass = React.createClass({
 	}
 });
 
-var OtherClass = React.createClass({
+var OtherClass;
+
+OtherClass = React.createClass({
 	propTypes: {
 		foo: React.PropTypes.bool
 	},

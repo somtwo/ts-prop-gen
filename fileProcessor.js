@@ -9,17 +9,9 @@ const matchTree = require('./treeMatcher').matchTree;
 
 function interfaceForClassName(className) {	return `I${className}Props`; }
 
-function getTypeNameForReactPropType(type) {
-	if(type == React.PropTypes.number)
-		return 'number';
-	else if(type == React.PropTypes.boolean)
-		return 'boolean';
-	else
-		return 'any';
-}
-
-const propTypeTree = {
+const variableDeclarationTree = {
 	'_matchMultiple': true,
+	'_optional': true,
 	'type': "VariableDeclarator",
 	'init': {
 		'type': "CallExpression",
@@ -52,11 +44,11 @@ const propTypeTree = {
 							},
 							'property': {
 								'type': 'Identifier',
-								'_onMatch': (node, state) => { state.valueType = node.name; }
+								'_onMatch': (node, state) => { state.propType = node.name; }
 							}
 						},
 						'_onMatch': (node, state) => { 
-							state.props = state.props | [];
+							state.props = state.props || [];
 							state.props.push({name: state.propName, type: state.propType });
 						}
 					}]
@@ -65,7 +57,7 @@ const propTypeTree = {
 		}]
 	},
 	'_onMatch': (node, state) => {
-		state.classes = state.classes | [];
+		state.classes = state.classes || [];
 		state.classes.push({
 			name: node.id.name,
 			props: state.props
@@ -80,12 +72,29 @@ var bodyTree = {
 	'body': [{
 		'_matchMultiple': true,
 		'type': 'VariableDeclaration',
-		'declarations': [propTypeTree]
-	}],
-	'_onMatch': (node, state) => {
-		console.log("Match!");
-	}
+		'declarations': [variableDeclarationTree]
+	}]
 }
+
+function buildInterfaceTypes(classes) {
+	return _.map(classes, (c) => {
+		return {
+			name: interfaceForClassName(c.name),
+			componentClassName: c.name,
+			members: c.props
+		};
+	});
+}
+
+function buildClassTypes(classes) {
+	return _.map(classes, (c) => {
+		return {
+			propsInterface: interfaceForClassName(c.name),
+			name: c.name
+		};
+	});
+}
+
 
 // TODO: Reference the base react.d.ts file
 function processFile(fileName) {
@@ -97,21 +106,16 @@ function processFile(fileName) {
 	});
 
 	var state = {};
-	matchTree(ast, bodyTree, state);
+	var match = matchTree(ast, bodyTree, state);
+
+	if(!match) {
+		console.log("Error: Failed to find class definitions in " + fileName);
+		return { interfaces: [], classes: [] }
+	}
 
 	var output = {
-		'interfaces': [{
-			'name': 'IFooProps',
-			'componentClassName': 'Foo',
-			'members': [
-				{'name': 'bar', 'type': 'boolean'},
-				{'name': 'baz', 'type': 'number'}
-			]
-		}],
-		'classes': [{
-			'name': 'Foo',
-			'propsInterface': 'IFooProps'
-		}]
+		'interfaces': buildInterfaceTypes(state.classes),
+		'classes': buildClassTypes(state.classes)
 	};
 
 	return output;

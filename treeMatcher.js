@@ -18,11 +18,48 @@ function getPatternDetails(pattern) {
 	return result;
 }
 
+function matchNodeArray(nodes, patterns, state, callOnMatch) {
+	if(!Array.isArray(patterns))
+		return false;
+
+	var patternInfo = _.map(patterns, (pattern, index) => {
+		var details = getPatternDetails(pattern);
+		return { 
+			pattern: pattern,
+			properties: details.properties,
+			meta: details.meta,
+			index: index,
+			timesMatched: 0
+		};
+	});
+
+	for(var i in patternInfo) {
+		var info = patternInfo[i];
+
+		if(info.meta._orderedMatch) {
+			if(nodes[i] != undefined && matchNode(nodes[i], info.pattern, state, callOnMatch))
+				info.timesMatched = 1;
+		}
+		else {
+			for(var p in nodes) {
+				var node = nodes[p];
+				if(matchNode(node, info.pattern, state, callOnMatch))
+					info.timesMatched++;
+			}
+		}
+
+		if(!info.meta._optional && (info.timesMatched == 0 || !info.meta._matchMultiple && info.timesMatched > 1))
+			return false;
+	}
+
+	return true;
+}
+
 function matchNode(node, pattern, state, callOnMatch) {
 	var details = getPatternDetails(pattern);
 
-	for(var i = 0; i < details.properties.length; ++i) {
-		var propinfo = details.properties[i];
+	for(var index in details.properties) {
+		var propinfo = details.properties[index];
 
 		var nodeProp = node[propinfo.key];
 		if(nodeProp == undefined)
@@ -31,7 +68,8 @@ function matchNode(node, pattern, state, callOnMatch) {
 		var type = typeof nodeProp;
 
 		if(Array.isArray(nodeProp)) {
-			// TODO
+			if(!matchNodeArray(nodeProp, pattern[propinfo.key], state, callOnMatch))
+				return false;
 		}
 		else if(type == 'object') {
 			if(!matchNode(nodeProp, pattern[propinfo.key], state, callOnMatch))
