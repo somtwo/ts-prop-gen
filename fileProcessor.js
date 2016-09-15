@@ -2,134 +2,121 @@ const assert = require('assert');
 const _ = require('lodash');
 const fs = require('fs');
 const React = require('react');
+const acorn = require('acorn-jsx');
 
 const generateFileText = require('./codeGen.js').generateFileText;
+const matchTree = require('./treeMatcher').matchTree;
 
 function interfaceForClassName(className) {	return `I${className}Props`; }
 
-function findMatchingBrackets(text, startIndex, openchar, closechar) {
-	var openLevel = 0;
-	var start, end, i;
+const variableDeclarationTree = {
+	'_matchMultiple': true,
+	'_optional': true,
+	'type': "VariableDeclarator",
+	'init': {
+		'type': "CallExpression",
+		'callee': {
+			'type': "MemberExpression",
+			'object': { 'type': "Identifier", 'name': "React" },
+			'property': { 'type': "Identifier", 'name': "createClass" }
+		},
+		'arguments': [{
+			'_orderedMatch': true,
+			'type': "ObjectExpression",
+			'properties': [{
+				'type': "Property",
+				'key': { 'type': "Identifier", 'name': "propTypes" },
+				'value': {
+					'type': "ObjectExpression",
+					'properties': [{
+						'_matchMultiple': true,
+						'type': "Property",
+						'key': {
+							'type': "Identifier",
+							'_onMatch': (node, state) => { state.propName = node.name; }
+						},
+						'value': {
+							'type': "MemberExpression",
+							'object': {
+								'type': "MemberExpression",
+								'object': { 'type': "Identifier", 'name': "React" },
+								'property': { 'type': 'Identifier', 'name': 'PropTypes' }
+							},
+							'property': {
+								'type': 'Identifier',
+								'_onMatch': (node, state) => { state.propType = node.name; }
+							}
+						},
+						'_onMatch': (node, state) => { 
+							state.props = state.props || [];
+							state.props.push({name: state.propName, type: state.propType });
+						}
+					}]
+				}
+			}]
+		}]
+	},
+	'_onMatch': (node, state) => {
+		state.classes = state.classes || [];
+		state.classes.push({
+			name: node.id.name,
+			props: state.props
+		});
 
-	for(i = startIndex; i < text.length; ++i) {
-		var char = text.charAt(i);
-
-		if(char == openchar) {
-			if(openLevel == 0) start = i;
-
-			openLevel++;
-			continue;
-		}
-
-		if(char == closechar) {
-			assert(openLevel > 0, "openLevel became less than 0 while extracting prop types.");
-			openLevel--;
-
-			if(openLevel == 0) {
-				end = i + 1;
-				break;
-			}
-		}
+		state.props = [];
 	}
-
-	if(i == text.length)	{
-		return { 'found': false };
-	}
-
-	return {
-		'found': true,
-		'start': start,
-		'end': end
-	};
 }
 
-
-function getClassBody(content, index) {
-	var pair = findMatchingBrackets(content, index, '(', ')');
-
-	assert(pair.found, "Failed to find the end of the class declaration");
-
-	var slice = content.slice(pair.start, pair.end);
-	return slice;
+var bodyTree = {
+	'type': 'Program',
+	'body': [{
+		'_matchMultiple': true,
+		'type': 'VariableDeclaration',
+		'declarations': [variableDeclarationTree]
+	}]
 }
 
-function extractPropsFromBody(text) {
-	var propsIndex = text.indexOf("propTypes");
-
-	if(propsIndex == -1) {
-		console.log("	Warning: no propTypes property defined in component definition.")
-		return "({})";
-	}
-
-	var range = findMatchingBrackets(text, propsIndex, '{', '}')
-
-	if(!range.found) {
-		console.log("	Warning: Failed to extract propTypes from class definition.");
-		return "({})";
-	}
-
-	var slice = `(${text.slice(range.start, range.end)})`;
-	return slice;
-}
-
-// TODO: Support more than two prop type types.
-function getTypeNameForReactPropType(type) {
-	if(type == React.PropTypes.number)
-		return 'number';
-	else if(type == React.PropTypes.boolean)
-		return 'boolean';
-	else
-		return 'any';
-}
-
-function getPropTypes(reactPropTypes) {
-	var result = [];
-
-	_.each(reactPropTypes, function(value, key) {
-		var prop = {
-			'name': key,
-			'type': getTypeNameForReactPropType(value)
+function buildInterfaceTypes(classes) {
+	return _.map(classes, (c) => {
+		return {
+			name: interfaceForClassName(c.name),
+			componentClassName: c.name,
+			members: c.props
 		};
-		result.push(prop);
 	});
-
-	return result;
 }
+
+function buildClassTypes(classes) {
+	return _.map(classes, (c) => {
+		return {
+			propsInterface: interfaceForClassName(c.name),
+			name: c.name
+		};
+	});
+}
+
 
 // TODO: Reference the base react.d.ts file
 function processFile(fileName) {
 	var content = fs.readFileSync(fileName, {'encoding': 'utf8'});
-	
-	var output = {
-		'interfaces': [],
-		'classes': []
-	};
 
-	// Look for react classes
-	var classRegex = /(?:var|let|const)\s+([\w-]+)\s+=\s+React\s*\.\s*createClass\s*\(\s*{/g;
+	var ast = acorn.parse(content, {
+		plugins: { jsx: true },
+		//locations: true
+	});
 
-	var matches;
-	while((matches = classRegex.exec(content)) !== null)
-	{
-		var className = matches[1];
+	var state = {};
+	var match = matchTree(ast, bodyTree, state);
 
-		var classBody = getClassBody(content, matches.index);
-		var propsObject = extractPropsFromBody(classBody);
-		var propObject = eval(propsObject);
-
-		var interfaceName = interfaceForClassName(className);
-
-		output.interfaces.push({
-			'name': interfaceName,
-			'componentClassName': className,
-			'members': getPropTypes(propObject)
-		});
-
-		output.classes.push({
-			'name': className,
-			'propsInterface': interfaceName
-		});
+	if(!match) {
+		console.log("Error: Failed to find class definitions in " + fileName);
+		return { interfaces: [], classes: [] }
 	}
+
+	var output = {
+		'interfaces': buildInterfaceTypes(state.classes),
+		'classes': buildClassTypes(state.classes)
+	};
 
 	return output;
 }
@@ -139,7 +126,7 @@ function processFiles(config, fileNames) {
 		return processFile(value);
 	});
 
-	var interfaces = _.map(processedFiles, function(value) { return value.interfaces; });
+	var interfaces = _.map(processedFiles, (value) => { return value.interfaces; });
 	var classes = _.map(processedFiles, function(value) { return value.classes; });
 
 	var output = {
