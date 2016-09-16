@@ -10,44 +10,44 @@ const matchTree = require('./treeMatcher').matchTree;
 function interfaceForClassName(className) {	return `I${className}Props`; }
 
 const variableDeclarationTree = {
-	'_matchMultiple': true,
-	'_optional': true,
-	'type': "VariableDeclarator",
-	'init': {
-		'type': "CallExpression",
-		'callee': {
-			'type': "MemberExpression",
-			'object': { 'type': "Identifier", 'name': "React" },
-			'property': { 'type': "Identifier", 'name': "createClass" }
+	_matchMultiple: true,
+	_optional: true,
+	type: "VariableDeclarator",
+	init: {
+		type: "CallExpression",
+		callee: {
+			type: "MemberExpression",
+			object: { type: "Identifier", name: "React" },
+			property: { type: "Identifier", name: "createClass" }
 		},
-		'arguments': [{
-			'_orderedMatch': true,
-			'type': "ObjectExpression",
-			'properties': [{
-				'type': "Property",
-				'key': { 'type': "Identifier", 'name': "propTypes" },
-				'value': {
-					'type': "ObjectExpression",
-					'properties': [{
-						'_matchMultiple': true,
-						'type': "Property",
-						'key': {
-							'type': "Identifier",
-							'_onMatch': (node, state) => { state.propName = node.name; }
+		arguments: [{
+			_orderedMatch: true,
+			type: "ObjectExpression",
+			properties: [{
+				type: "Property",
+				key: { type: "Identifier", name: "propTypes" },
+				value: {
+					type: "ObjectExpression",
+					properties: [{
+						_matchMultiple: true,
+						type: "Property",
+						key: {
+							type: "Identifier",
+							_onMatch: (node, state) => { state.propName = node.name; }
 						},
-						'value': {
-							'type': "MemberExpression",
-							'object': {
-								'type': "MemberExpression",
-								'object': { 'type': "Identifier", 'name': "React" },
-								'property': { 'type': 'Identifier', 'name': 'PropTypes' }
+						value: {
+							type: "MemberExpression",
+							object: {
+								type: "MemberExpression",
+								object: { type: "Identifier", name: "React" },
+								property: { type: 'Identifier', name: 'PropTypes' }
 							},
-							'property': {
-								'type': 'Identifier',
-								'_onMatch': (node, state) => { state.propType = node.name; }
+							property: {
+								type: 'Identifier',
+								_onMatch: (node, state) => { state.propType = node.name; }
 							}
 						},
-						'_onMatch': (node, state) => { 
+						_onMatch: (node, state) => { 
 							state.props = state.props || [];
 							state.props.push({name: state.propName, type: state.propType });
 						}
@@ -56,7 +56,7 @@ const variableDeclarationTree = {
 			}]
 		}]
 	},
-	'_onMatch': (node, state) => {
+	_onMatch: (node, state) => {
 		state.classes = state.classes || [];
 		state.classes.push({
 			name: node.id.name,
@@ -68,11 +68,11 @@ const variableDeclarationTree = {
 }
 
 var bodyTree = {
-	'type': 'Program',
-	'body': [{
-		'_matchMultiple': true,
-		'type': 'VariableDeclaration',
-		'declarations': [variableDeclarationTree]
+	type: 'Program',
+	body: [{
+		_matchMultiple: true,
+		type: 'VariableDeclaration',
+		declarations: [variableDeclarationTree]
 	}]
 }
 
@@ -98,7 +98,7 @@ function buildClassTypes(classes) {
 
 // TODO: Reference the base react.d.ts file
 function processFile(fileName) {
-	var content = fs.readFileSync(fileName, {'encoding': 'utf8'});
+	var content = fs.readFileSync(fileName, {encoding: 'utf8'});
 
 	var ast = acorn.parse(content, {
 		plugins: { jsx: true },
@@ -114,8 +114,8 @@ function processFile(fileName) {
 	}
 
 	var output = {
-		'interfaces': buildInterfaceTypes(state.classes),
-		'classes': buildClassTypes(state.classes)
+		interfaces: buildInterfaceTypes(state.classes),
+		classes: buildClassTypes(state.classes)
 	};
 
 	return output;
@@ -130,9 +130,9 @@ function processFiles(config, fileNames) {
 	var classes = _.map(processedFiles, (value) => { return value.classes; });
 
 	var output = {
-		'moduleName': config.moduleName,
-		'interfaces': _.flatten(interfaces),
-		'classes': _.flatten(classes)
+		moduleName: config.moduleName,
+		interfaces: _.flatten(interfaces),
+		classes: _.flatten(classes)
 	};
 
 	generateFileText(output);
@@ -140,5 +140,5 @@ function processFiles(config, fileNames) {
 }
 
 module.exports = {
-	'processFiles' : processFiles
+	processFiles: processFiles
 }
