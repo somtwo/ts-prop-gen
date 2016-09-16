@@ -9,6 +9,21 @@ const matchTree = require('./treeMatcher').matchTree;
 
 function interfaceForClassName(className) {	return `I${className}Props`; }
 
+const typeNames = {
+	// About as good as they can be
+	array: 'Array<any>',
+	bool: 'boolean',
+	number: 'number',
+	object: 'Object',
+	string: 'string',
+
+	// Could (probably) be better
+	symbol: 'any',
+	func: 'any',
+	node: 'any',
+	element: 'any'
+}
+
 const variableDeclarationTree = {
 	_matchMultiple: true,
 	_optional: true,
@@ -44,7 +59,9 @@ const variableDeclarationTree = {
 							},
 							property: {
 								type: 'Identifier',
-								_onMatch: (node, state) => { state.propType = node.name; }
+								_onMatch: (node, state) => {
+									state.propType = typeNames[node.name] || 'any';
+								}
 							}
 						},
 						_onMatch: (node, state) => { 

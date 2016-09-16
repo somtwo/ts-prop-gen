@@ -3,7 +3,10 @@ const React = require('react');
 var MyClass = React.createClass({
 	propTypes: {
 		foo: React.PropTypes.bool,
-		bar: React.PropTypes.number
+		bar: React.PropTypes.number,
+		baz: React.PropTypes.func,
+		qux: React.PropTypes.object,
+		bad: React.PropTypes.symbol
 	},
 	render: function() {
 		return (<div>Hello world!</div>);
