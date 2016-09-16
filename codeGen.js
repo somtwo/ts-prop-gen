@@ -15,8 +15,8 @@ function _outdent(output) {
 }
 
 function getNamespaceName(moduleName) {
-	var camelCased = moduleName.replace(/-([a-z])/g, function (g) { return g[1].toUpperCase(); });
-	return camelCased.replace(/^[a-z]/g, function(g) { return g[0].toUpperCase(); });
+	var camelCased = moduleName.replace(/-([a-z])/g, (g) => { return g[1].toUpperCase(); });
+	return camelCased.replace(/^[a-z]/g, (g) => { return g[0].toUpperCase(); });
 }
 
 function generateFileText(output) {
@@ -27,12 +27,12 @@ function generateFileText(output) {
 	output.text += `declare namespace ${namespace} {\n`;
 	output.indentation++;
 
-	_.each(output.interfaces, function(element, key) {
+	_.each(output.interfaces, (element, key) => {
 		_writeIndentation(output);
 		output.text += `export interface ${element.name} extends React.Props<${element.componentClassName}> {\n`;
 		output.indentation ++;
 
-		_.each(element.members, function(member, key) {
+		_.each(element.members, (member, key) => {
 			_writeIndentation(output);
 			output.text += `${member.name}: ${member.type};\n`;
 		});
@@ -40,7 +40,7 @@ function generateFileText(output) {
 		_outdent(output);
 	});
 
-	_.each(output.classes, function(element, key) {
+	_.each(output.classes, (element, key) => {
 		_writeIndentation(output);
 		output.text += `export class ${element.name} extends React.Component<${element.propsInterface}, {}> {\n`;
 		output.indentation++;

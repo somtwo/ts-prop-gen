@@ -122,12 +122,12 @@ function processFile(fileName) {
 }
 
 function processFiles(config, fileNames) {
-	var processedFiles = _.map(fileNames, function(value) {
+	var processedFiles = _.map(fileNames, (value) => {
 		return processFile(value);
 	});
 
 	var interfaces = _.map(processedFiles, (value) => { return value.interfaces; });
-	var classes = _.map(processedFiles, function(value) { return value.classes; });
+	var classes = _.map(processedFiles, (value) => { return value.classes; });
 
 	var output = {
 		'moduleName': config.moduleName,
