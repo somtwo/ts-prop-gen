@@ -3,6 +3,7 @@ const _ = require('lodash');
 const fs = require('fs');
 const React = require('react');
 const acorn = require('acorn-jsx');
+const babel = require('babel-core');
 
 const generateFileText = require('./codeGen.js').generateFileText;
 const matchTree = require('./treeMatcher').matchTree;
@@ -25,8 +26,8 @@ const typeNames = {
 }
 
 const variableDeclarationTree = {
-	_matchMultiple: true,
-	_optional: true,
+	__matchMultiple: true,
+	__optional: true,
 	type: "VariableDeclarator",
 	init: {
 		type: "CallExpression",
@@ -36,7 +37,7 @@ const variableDeclarationTree = {
 			property: { type: "Identifier", name: "createClass" }
 		},
 		arguments: [{
-			_orderedMatch: true,
+			__orderedMatch: true,
 			type: "ObjectExpression",
 			properties: [{
 				type: "Property",
@@ -44,11 +45,11 @@ const variableDeclarationTree = {
 				value: {
 					type: "ObjectExpression",
 					properties: [{
-						_matchMultiple: true,
+						__matchMultiple: true,
 						type: "Property",
 						key: {
 							type: "Identifier",
-							_onMatch: (node, state) => { state.propName = node.name; }
+							__onMatch: (node, state) => { state.propName = node.name; }
 						},
 						value: {
 							type: "MemberExpression",
@@ -59,12 +60,12 @@ const variableDeclarationTree = {
 							},
 							property: {
 								type: 'Identifier',
-								_onMatch: (node, state) => {
+								__onMatch: (node, state) => {
 									state.propType = typeNames[node.name] || 'any';
 								}
 							}
 						},
-						_onMatch: (node, state) => { 
+						__onMatch: (node, state) => { 
 							state.props = state.props || [];
 							state.props.push({name: state.propName, type: state.propType });
 						}
@@ -73,7 +74,7 @@ const variableDeclarationTree = {
 			}]
 		}]
 	},
-	_onMatch: (node, state) => {
+	__onMatch: (node, state) => {
 		state.classes = state.classes || [];
 		state.classes.push({
 			name: node.id.name,
@@ -87,7 +88,7 @@ const variableDeclarationTree = {
 var bodyTree = {
 	type: 'Program',
 	body: [{
-		_matchMultiple: true,
+		__matchMultiple: true,
 		type: 'VariableDeclaration',
 		declarations: [variableDeclarationTree]
 	}]

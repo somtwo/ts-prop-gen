@@ -6,12 +6,14 @@ function getPatternDetails(pattern) {
 		meta: {}
 	};
 
+	const metaPrefix = "__";
+
 	_.forOwn(pattern, (value, key) => {
-		if(key.indexOf("_") == -1) {
+		if(key.indexOf(metaPrefix) != 0) {
 			result.properties.push({ key: key, value: value });
 		}
 		else {
-			result.meta[key] = value;
+			result.meta[key.slice(metaPrefix.length, key.length)] = value;
 		}
 	});
 
@@ -36,7 +38,7 @@ function matchNodeArray(nodes, patterns, state, callOnMatch) {
 	for(var i in patternInfo) {
 		var info = patternInfo[i];
 
-		if(info.meta._orderedMatch) {
+		if(info.meta.orderedMatch) {
 			if(nodes[i] != undefined && matchNode(nodes[i], info.pattern, state, callOnMatch))
 				info.timesMatched = 1;
 		}
@@ -48,7 +50,7 @@ function matchNodeArray(nodes, patterns, state, callOnMatch) {
 			}
 		}
 
-		if(!info.meta._optional && (info.timesMatched == 0 || !info.meta._matchMultiple && info.timesMatched > 1))
+		if(!info.meta.optional && (info.timesMatched == 0 || !info.meta.matchMultiple && info.timesMatched > 1))
 			return false;
 	}
 
@@ -80,8 +82,8 @@ function matchNode(node, pattern, state, callOnMatch) {
 		}
 	}
 
-	if(typeof details.meta._onMatch == 'function' && callOnMatch) {
-		details.meta._onMatch(node, state);
+	if(typeof details.meta.onMatch == 'function' && callOnMatch) {
+		details.meta.onMatch(node, state);
 	}
 	return true;
 }
